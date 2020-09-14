@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <nav class="nav-extended" style="
+    background-color: aqua;
+">
+
+    <div class="nav-content">
+      <span class="nav-title">Selleh Lake Restoration</span>
+
+    </div>
+  </nav>
+		<div class="row">
+		<div class="col s12">
+			<fieldset>
+
+				<legend>Filters</legend>
+			<div class="col s6">
+
+
+
+             <label>Site</label>
+             <select id = "site" style="display: block;" onmousedown="this.value='';" onchange="callCharts();">
+               <option value = "Site01">Site 1</option>
+
+             </select>
+			</div>
+			<div class="col s6">
+				<label>Granularity</label>
+             <select id = "granularity" style="display: block;" onmousedown="this.value='';" onchange="callCharts();">
+               <option value = "hour">Hourly</option>
+                 <option value = "day">Daily</option>
+                 <option value = "week">Weekly</option>
+
+             </select>
+			</div>
+
+       </fieldset>
+
+
+		</div>
+			</div>
+
+
+    <div class="row" >
+        <div class="col s12 m6">
+
+			<div class="card">
+        		<div class="card-content blue-text">
+          			<span class="card-title">Flow Rates</span>
+            			<canvas id="barChart"></canvas>
+				</div>
+			</div>
+
+
+        </div>
+		<div class="col s12 m6 ">
+			<div class="card">
+        		<div class="card-content blue-text">
+          			<span class="card-title">Current Values</span>
+					<blockquote id="timest" style="
+    background: aliceblue;
+    border-left: 5px solid aqua;
+">
+    </blockquote>
+					<blockquote id="latest" style="
+    background: aliceblue;
+    border-left: 5px solid aqua;
+">
+    </blockquote>
+					<div id="curr_values">
+					<table>
+						<tr>
+							<td><div id="inflow_curr"></div></td>
+							<td><div id="outflow_curr"></div></td>
+						</tr>
+						<tr>
+							<td><div id="turbidity_curr"></div></td>
+							<td><div id="oxygen_curr"></div></td>
+						</tr>
+					</table>
+						</div>
+
+
+				</div>
+			</div>
+
+        </div>
+	</div>
+	<div class="row">
+
+        <div class="col s12 m6">
+			<div class="card">
+        		<div class="card-content blue-text">
+					<span class="card-title">NTU Turbidity</span>
+            <canvas id="pieChart"></canvas>
+					</div>
+			</div>
+        </div>
+
+        <div class="col s12 m6">
+			<div class="card">
+        		<div class="card-content blue-text">
+					<span class="card-title">Dissolved Oxygen</span>
+            <canvas id="polarAreaChart"></canvas>
+					</div>
+			</div>
+        </div>
+
+    </div>
+
+    <script>
+		var data;
+		var datetime;
+		var chart1, chart2, chart3;
+		window.onload = function() {
+		    data=""
+		    var endpoint = '/displayDashboard';
+		    fetch(endpoint)
+                .then(function (response) {
+
+                    return response.json();
+
+                })
+				.then(function(myJson){
+
+				    data=myJson;
+				    console.log(data);
+				    var today = new Date();
+					dateTime = today.toLocaleString('en-US', { timeZone: 'America/Phoenix' });
+				    callCharts();
+                });
+
+
+};
+		function callCharts(site='Site01',granularity='hour') {
+
+            var site = document.getElementById("site").value;
+            var granularity = document.getElementById("granularity").value;
+            var sensor = ['D_InFlow01', 'D_OutFlow01', 'D_Turbidity01', 'D_Oxygen01']
+
+			if(data[site][sensor[0]]['curr_values']=='No Values'){
+			    document.getElementById("curr_values").innerHTML="No current values are available, Please check the sensors."}
+			else
+			{
+			    document.getElementById("timest").innerHTML= "Data Fetched at : "+dateTime;
+			    document.getElementById("latest").innerHTML= "Recent Entry at : "+new Date(Object.keys(data[site][sensor[0]]['curr_values'])[0]).toLocaleString();
+			    document.getElementById("inflow_curr").innerHTML="In Flow Rate: "+(data[site][sensor[0]]['curr_values'][Object.keys(data[site][sensor[0]]['curr_values'])[0]]).bold()+" ml/s";
+				document.getElementById("outflow_curr").innerHTML="Out Flow Rate: "+(data[site][sensor[1]]['curr_values'][Object.keys(data[site][sensor[1]]['curr_values'])[0]]).bold()+" ml/s";
+				document.getElementById("turbidity_curr").innerHTML="NTU Turbidity: "+(data[site][sensor[2]]['curr_values'][Object.keys(data[site][sensor[2]]['curr_values'])[0]]).bold()+" FTU";
+				document.getElementById("oxygen_curr").innerHTML="Dissolved Oxygen: "+(data[site][sensor[3]]['curr_values'][Object.keys(data[site][sensor[3]]['curr_values'])[0]]).bold()+" ppm";
+			}
+
+            var labels, colors;
+            labels_inflow = data[site][sensor[0]][granularity].labels
+			values_inflow = data[site][sensor[0]][granularity].values
+			labels_outflow = data[site][sensor[1]][granularity].labels
+			values_outflow = data[site][sensor[1]][granularity].values
+			labels_turbidity = data[site][sensor[2]][granularity].labels
+			values_turbidity = data[site][sensor[2]][granularity].values
+			labels_oxygen = data[site][sensor[3]][granularity].labels
+			values_oxygen = data[site][sensor[3]][granularity].values
+
+            // fetch(endpoint)
+            //     .then(function (response) {
+            //         return response.json();
+            //     })
+            //     .then(function (data) {
+            //         labels_inflow = data[site][sensor[0]][granularity].labels
+            //         values_inflow = data[site][sensor[0]][granularity].values
+            //         labels_outflow = data[site][sensor[1]][granularity].labels
+            //         values_outflow = data[site][sensor[1]][granularity].values
+            //         labels_turbidity = data[site][sensor[2]][granularity].labels
+            //         values_turbidity = data[site][sensor[2]][granularity].values
+            //         labels_oxygen = data[site][sensor[3]][granularity].labels
+            //         values_oxygen = data[site][sensor[3]][granularity].values
+            //
+            //         // labels = new Array(data.length);
+            //
+            //     });
+            colors = new Array(values_oxygen.length);
+                    for (i = 0; i < values_oxygen.length; i++) {
+
+                        colors[i] = getRandomColor();
+                    }
+
+
+
+                    chart1 = show2Chart(values_inflow, values_outflow, labels_inflow, colors, 'line', 'In Flow Rate', 'Out Flow Rate', 'barChart', 'ml/s', chart1);
+                    //showChart(values_outflow, labels_outflow, colors, 'line', 'Out Flow Rate', 'radarChart');
+                    chart2 = showChart(values_turbidity, labels_turbidity, colors, 'line', 'NTU Turbidity', 'pieChart','FTU', chart2);
+                    chart3 = showChart(values_oxygen, labels_oxygen, colors, 'line', 'Dissolved Oxygen', 'polarAreaChart','ppm', chart3);
+
+        }
+
+        function show2Chart(data1,data2, labels, colors, type='bar',chartName1,chartName2, canvasId, ylabel, chartid){
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            if(chartid)
+                chartid.destroy();
+            chartid = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: chartName1,
+                        data: data1,
+                        borderWidth: 3,
+						borderColor:'rgba(80, 0, 0, 0.5)',
+                        //backgroundColor: 'rgba(80, 10, 0, 0.5)',
+						borderCapStyle:'round',
+						borderJoinStyle:'miter',
+						fill:false,
+                    },
+					{
+                        label: chartName2,
+                        data: data2,
+                        borderWidth: 3,
+						borderColor:'rgba(0, 0, 80, 0.5)',
+                        //backgroundColor: 'rgba(0, 0, 80, 0.5)',
+						borderCapStyle:'round',
+						borderJoinStyle:'miter',
+						fill:false,
+                    }]
+                },
+                options: {
+                    responsive:true,
+					maintainAspectRatio: true,
+                    scales: {
+                        xAxes: [{
+               				gridLines: {
+                  			display: false
+               				}
+            			}],
+                        yAxes: [{
+                            scaleLabel: {
+        						display: true,
+        						labelString: ylabel,
+							},
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+            return chartid;
+        }
+
+        function showChart(data, labels, colors, type='bar',chartName, canvasId, ylabel,chartid){
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            if(chartid) {
+                //alert('here');
+                chartid.destroy();
+            }
+            chartid = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: chartName,
+                        data: data,
+                        borderWidth: 3,
+						borderColor:'rgba(80, 0, 0, 0.5)',
+                        //backgroundColor: 'rgba(0, 0, 0, 0.4)',
+						borderCapStyle:'round',
+						borderJoinStyle:'miter',
+						fill:false,
+                    }]
+                },
+                options: {
+                    responsive:true,
+					maintainAspectRatio: true,
+                    scales: {
+                        xAxes: [{
+               				gridLines: {
+                  			display: false
+               				}
+            			}],
+                        yAxes: [{
+                            scaleLabel: {
+        						display: true,
+        						labelString: ylabel,
+							},
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+            return chartid;
+        }
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF'.split('');
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+    </script>
+
+{% endblock content %}

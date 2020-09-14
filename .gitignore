@@ -1,0 +1,7 @@
+*.txt
+*.docx
+*.zip
+test.py
+sensor_keys
+sensors.py
+pricing_details
