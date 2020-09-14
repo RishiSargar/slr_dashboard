@@ -5,3 +5,4 @@ test.py
 sensor_keys
 sensors.py
 pricing_details
+*.tmp
